@@ -1,11 +1,31 @@
 const express = require("express");
+const { update } = require("../data/dbConfig");
 const udb = require("./userDb");
+const pdb = require("../posts/postDb");
 
 const router = express.Router();
 
-router.post("/", (req, res) => {});
+router.post("/", validateUser, (req, res) => {
+  udb
+    .insert(req.body)
+    .then((newUser) => {
+      res.status(201).json(newUser);
+    })
+    .catch((error) => next(error));
+});
 
-router.post("/:id/posts", (req, res) => {});
+router.post("/:id/posts", validateUserId, validatePost, (req, res) => {
+  const newPost = {
+    text: req.body.text,
+    user_id: req.params.id,
+  };
+  pdb
+    .insert(newPost)
+    .then((post) => {
+      res.status(201).json(post);
+    })
+    .catch((error) => console.log(error));
+});
 
 router.get("/", (req, res) => {
   udb
@@ -37,9 +57,23 @@ router.get("/:id/posts", validateUserId, (req, res) => {
     .catch((error) => next(error));
 });
 
-router.delete("/:id", validateUserId, (req, res) => {});
+router.delete("/:id", validateUserId, (req, res) => {
+  udb
+    .remove(req.params.id)
+    .then((num) => {
+      res.status(300).json(num);
+    })
+    .catch((error) => next(error));
+});
 
-router.put("/:id", validateUserId, (req, res) => {});
+router.put("/:id", validateUserId, validateUser, (req, res) => {
+  udb
+    .update(req.params.id, req.body)
+    .then((updates) => {
+      res.status(300).json(updates);
+    })
+    .catch((error) => next(error));
+});
 
 //custom middleware
 
@@ -65,8 +99,8 @@ function validateUserId(req, res, next) {
 }
 
 function validateUser(req, res, next) {
-  if (!req.body) {
-    res.status(400).json({
+  if (Object.values(req.body).length === 0) {
+    return res.status(400).json({
       errorMessage: "Missing user data",
     });
   } else if (!req.body.name) {
@@ -79,8 +113,8 @@ function validateUser(req, res, next) {
 }
 
 function validatePost(req, res, next) {
-  if (!req.body) {
-    res.status(400).json({
+  if (Object.values(req.body).length === 0) {
+    return res.status(400).json({
       errorMessage: "Missing post data",
     });
   } else if (!req.body.text) {
