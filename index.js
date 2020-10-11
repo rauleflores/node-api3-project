@@ -1,11 +1,13 @@
 const express = require("express");
+const cors = require("cors");
 const logger = require("./middleware/logger");
 const userRouter = require("./users/userRouter");
 
 const server = express();
-const port = 8000;
+const port = process.env.PORT || 8000;
 
 server.use(express.json());
+server.use(cors());
 server.use(logger);
 server.use(userRouter);
 
